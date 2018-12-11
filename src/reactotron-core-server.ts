@@ -1,4 +1,5 @@
 import { merge, find, propEq, without, contains, forEach, pluck, reject, equals } from "ramda"
+import { createServer as createHttpsServer, ServerOptions as HttpsServerOptions } from "https"
 import { Server as WebSocketServer, OPEN } from "ws"
 import * as mitt from "mitt"
 import validate from "./validation"
@@ -9,7 +10,10 @@ import {
   ServerEvent,
   CommandEvent,
   WebSocketEvent,
+  PfxServerOptions,
+  WssServerOptions,
 } from "./types"
+import { readFileSync } from "fs"
 
 /**
  * The default server options.
@@ -25,6 +29,24 @@ function createGuid() {
       .substring(1)
   }
   return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4()
+}
+
+function isPfxServerOptions(wssOptions: WssServerOptions): wssOptions is PfxServerOptions {
+  return !!(wssOptions as PfxServerOptions).pathToPfx
+}
+
+function buildHttpsServerOptions(wssOptions: WssServerOptions): HttpsServerOptions {
+  if (isPfxServerOptions(wssOptions)) {
+    return {
+      pfx: readFileSync(wssOptions.pathToPfx),
+      passphrase: wssOptions.passphrase,
+    }
+  }
+  return {
+    cert: readFileSync(wssOptions.pathToCert),
+    key: wssOptions.pathToKey ? readFileSync(wssOptions.pathToKey) : undefined,
+    passphrase: wssOptions.passphrase,
+  }
 }
 
 /**
@@ -67,6 +89,11 @@ export default class Server {
   wss: WebSocketServer
 
   /**
+   * Options for configuring wss (websocket secure).
+   */
+  wssOptions: WssServerOptions
+
+  /**
    * Holds the currently connected clients.
    */
   connections = []
@@ -79,11 +106,12 @@ export default class Server {
   /**
    * Set the configuration options.
    */
-  configure(options: ServerOptions = DEFAULTS) {
+  configure(options: ServerOptions = DEFAULTS, wssOptions: WssServerOptions) {
     // options get merged & validated before getting set
     const newOptions = merge(this.options, options)
     validate(newOptions)
     this.options = newOptions
+    this.wssOptions = wssOptions
     return this
   }
 
@@ -107,8 +135,13 @@ export default class Server {
   start = () => {
     const { port } = this.options
 
-    // start listening
-    this.wss = new WebSocketServer({ port })
+    if (!this.wssOptions) {
+      this.wss = new WebSocketServer({ port })
+    } else {
+      const server = createHttpsServer(buildHttpsServerOptions(this.wssOptions))
+      this.wss = new WebSocketServer({ server })
+      server.listen(port)
+    }
 
     // register events
     this.wss.on("connection", (socket, request) => {
@@ -292,14 +325,14 @@ export default class Server {
     if (contains(path, this.subscriptions)) {
       return
     }
-    
+
     // monitor the complete state when * (star selector) is entered
-    if (equals(path, '*')) {
-      this.subscriptions.push('')
+    if (equals(path, "*")) {
+      this.subscriptions.push("")
     } else {
-       this.subscriptions.push(path)
+      this.subscriptions.push(path)
     }
-      
+
 
     // subscribe
     this.stateValuesSendSubscriptions()
@@ -337,8 +370,8 @@ export default class Server {
 }
 
 // convenience factory function
-export const createServer = (options?: ServerOptions) => {
+export const createServer = (options?: ServerOptions, wssOptions?: WssServerOptions) => {
   const server = new Server()
-  server.configure(options)
+  server.configure(options, wssOptions)
   return server
 }
