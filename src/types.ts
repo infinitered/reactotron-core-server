@@ -8,7 +8,6 @@ export interface ServerOptions {
    * Which port to listen to.  Default: 9090.
    */
   port: number
-
 }
 
 export interface PfxServerOptions {
