@@ -8,6 +8,11 @@ export interface ServerOptions {
    * Which port to listen to.  Default: 9090.
    */
   port: number
+
+  /**
+   * Web Socket Secure Configuration
+   */
+  wss?: WssServerOptions
 }
 
 export interface PfxServerOptions {

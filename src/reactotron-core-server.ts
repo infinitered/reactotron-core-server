@@ -36,11 +36,17 @@ function isPfxServerOptions(wssOptions: WssServerOptions): wssOptions is PfxServ
 }
 
 function buildHttpsServerOptions(wssOptions: WssServerOptions): HttpsServerOptions {
+  if (!wssOptions) {
+    return undefined
+  }
   if (isPfxServerOptions(wssOptions)) {
     return {
       pfx: readFileSync(wssOptions.pathToPfx),
       passphrase: wssOptions.passphrase,
     }
+  }
+  if (!wssOptions.pathToCert) {
+    return undefined
   }
   return {
     cert: readFileSync(wssOptions.pathToCert),
@@ -89,11 +95,6 @@ export default class Server {
   wss: WebSocketServer
 
   /**
-   * Options for configuring wss (websocket secure).
-   */
-  wssOptions: WssServerOptions
-
-  /**
    * Holds the currently connected clients.
    */
   connections = []
@@ -106,12 +107,11 @@ export default class Server {
   /**
    * Set the configuration options.
    */
-  configure(options: ServerOptions = DEFAULTS, wssOptions: WssServerOptions) {
+  configure(options: ServerOptions = DEFAULTS) {
     // options get merged & validated before getting set
     const newOptions = merge(this.options, options)
     validate(newOptions)
     this.options = newOptions
-    this.wssOptions = wssOptions
     return this
   }
 
@@ -134,11 +134,11 @@ export default class Server {
    */
   start = () => {
     const { port } = this.options
-
-    if (!this.wssOptions) {
+    const httpsServerOptions = buildHttpsServerOptions(this.options.wss)
+    if (!httpsServerOptions) {
       this.wss = new WebSocketServer({ port })
     } else {
-      const server = createHttpsServer(buildHttpsServerOptions(this.wssOptions))
+      const server = createHttpsServer(httpsServerOptions)
       this.wss = new WebSocketServer({ server })
       server.listen(port)
     }
@@ -370,8 +370,8 @@ export default class Server {
 }
 
 // convenience factory function
-export const createServer = (options?: ServerOptions, wssOptions?: WssServerOptions) => {
+export const createServer = (options?: ServerOptions) => {
   const server = new Server()
-  server.configure(options, wssOptions)
+  server.configure(options)
   return server
 }
