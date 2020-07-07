@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "mitt": "1.1.3",
-    "ramda": "0.26.1",
+    "ramda": "0.27.0",
     "ws": "7.1.2"
   },
   "devDependencies": {
@@ -45,7 +45,7 @@
     "@semantic-release/git": "8.0.0",
     "@types/jest": "26.0.4",
     "@types/node": "12.12.31",
-    "@types/ramda": "0.26.40",
+    "@types/ramda": "0.27.10",
     "@types/ws": "6.0.4",
     "@typescript-eslint/eslint-plugin": "2.9.0",
     "@typescript-eslint/parser": "2.9.0",
