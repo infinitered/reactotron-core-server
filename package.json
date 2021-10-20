@@ -42,7 +42,7 @@
     "@babel/plugin-proposal-class-properties": "7.14.5",
     "@babel/preset-env": "7.14.5",
     "@babel/preset-typescript": "7.14.5",
-    "@semantic-release/git": "8.0.0",
+    "@semantic-release/git": "10.0.0",
     "@types/jest": "26.0.23",
     "@types/node": "14.17.3",
     "@types/ramda": "0.26.40",
@@ -68,7 +68,7 @@
     "rollup-plugin-filesize": "9.1.1",
     "rollup-plugin-node-resolve": "5.2.0",
     "rollup-plugin-resolve": "0.0.1-predev.1",
-    "semantic-release": "16.0.4",
+    "semantic-release": "18.0.0",
     "trash-cli": "4.0.0",
     "ts-jest": "26.5.6",
     "typescript": "4.3.3"
